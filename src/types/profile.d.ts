@@ -1,0 +1,20 @@
+export interface ProfileSchemaI {
+    uid?: string
+    phone: string
+    country: CountryCodes
+    position: Position
+    company: string
+}
+
+export enum Position {
+    OWNER = 'OWNER', //Propietario
+    MANAGER = 'MANAGER', //Gerente
+    ADMIN = 'ADMIN', //Administrador
+    CASHIER = 'CASHIER', //Cajero
+}
+
+export enum CountryCodes {
+    COLOMBIA = 'CO',
+    PERU = 'PE',
+    CHILE = 'CH'
+}
