@@ -9,6 +9,8 @@ export class AuthRouter {
         this.router = Router();
         this.router.post('/register', this.RegisterUser);
         this.router.post('/complete-profile', this.CompleteProfile);
+        this.router.post('/verification-code', this.VerificationCode);
+        this.router.post('/verificate-account', this.VerificateAccount);
         this.router.post('/login', this.Login);
     }
 
@@ -39,6 +41,36 @@ export class AuthRouter {
             const { uid, phone, country, position, company } = req.body
 
             const response  = await AuthController.CompleteProfile({ uid, phone, country, position, company })
+
+            if(!response.success){
+                return res.status(response.code).send(response.error)
+            }
+            return res.status(response.code).send(response.res)
+        } catch (error: any) {
+            return res.status(500).send(error.message)
+        }
+    }
+
+    private VerificationCode = async(req: Request, res: Response) => {
+        try {
+            const { email } = req.body
+
+            const response  = await AuthController.VerificationCode(email)
+
+            if(!response.success){
+                return res.status(response.code).send(response.error)
+            }
+            return res.status(response.code).send(response.res)
+        } catch (error: any) {
+            return res.status(500).send(error.message)
+        }
+    }
+
+    private VerificateAccount = async(req: Request, res: Response) => {
+        try {
+            const { uid, code } = req.body
+
+            const response  = await AuthController.VerificateAccount(uid, code)
 
             if(!response.success){
                 return res.status(response.code).send(response.error)
