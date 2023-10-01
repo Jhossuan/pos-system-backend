@@ -23,6 +23,10 @@ const ProfileSchema = new Schema({
         type: String,
         require: true
     },
+    companyId: {
+        type: String,
+        require: true
+    }
 })
 
 const Profile = model<ProfileSchemaI>('Profile', ProfileSchema)

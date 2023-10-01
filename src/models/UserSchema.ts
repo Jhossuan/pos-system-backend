@@ -1,13 +1,12 @@
 import { Schema, model } from "mongoose";
 import ShortUniqueId from "short-unique-id";
-import { MetadataI, SubscriptionsT, UserSchemaI } from "../types/user";
+import { MetadataI, UserSchemaI } from "../types/user";
 
 const uid = new ShortUniqueId({ length:20 });
 
 const InitMetadata: MetadataI = {
-    pos: [],
     lastConnection: null,
-    subscription: "FREE"
+    subscription: "FREE",
 }
 
 const UserSchema = new Schema({
@@ -38,7 +37,7 @@ const UserSchema = new Schema({
     },
     metadata: {
         type: Object,
-        require: false,
+        require: true,
         default: InitMetadata
     },
     created_at: {

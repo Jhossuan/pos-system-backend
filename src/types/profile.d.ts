@@ -4,6 +4,7 @@ export interface ProfileSchemaI {
     country: CountryCodes
     position: Position
     company: string
+    companyId: string
 }
 
 export enum Position {

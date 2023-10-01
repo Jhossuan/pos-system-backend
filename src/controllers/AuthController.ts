@@ -9,6 +9,7 @@ import { UserSchemaI } from "../types/user";
 import { ProfileSchemaI } from "../types/profile";
 import { ToolsDate } from "../utils/toolsDate";
 import moment from 'moment'
+import ShortUniqueId from "short-unique-id";
 
 export class AuthController {
 
@@ -35,7 +36,9 @@ export class AuthController {
         return Math.floor(100000 + Math.random() * 900000).toString();
     }
 
-    static RegisterUser = async ({name, email, password}: UserSchemaI): Promise<ControllerResponse<Object>> => {
+    static uid = new ShortUniqueId({ length:20 });
+
+    static RegisterUser = async ({name, email, password, metadata}: UserSchemaI): Promise<ControllerResponse<Object>> => {
 
         const isEmailExist = await User.findOne({ email })
         if(isEmailExist){
@@ -67,7 +70,8 @@ export class AuthController {
         const user = new User({
             name,
             email,
-            password: hashPassword
+            password: hashPassword,
+            ...(metadata?.pos?.length !== 0 && { "metadata.pos": metadata?.pos }), // Se valida, esto solamente es cuando se registra un empleado
         })
 
         try {
@@ -91,7 +95,7 @@ export class AuthController {
         }
     }
 
-    static CompleteProfile = async ({ uid, phone, country, position, company }: ProfileSchemaI): Promise<ControllerResponse<Object>> => {
+    static CompleteProfile = async ({ uid, phone, country, position, company, companyId }: ProfileSchemaI): Promise<ControllerResponse<Object>> => {
 
         if(!uid || !phone || !country || !position || !company){
             return {
@@ -119,7 +123,8 @@ export class AuthController {
             phone,
             country,
             position,
-            company
+            company,
+            ...(companyId ? { companyId } : { companyId: this.uid.rnd() })
         })
 
         try {

@@ -24,9 +24,9 @@ export class AuthRouter {
 
     private RegisterUser = async(req: Request, res: Response) => {
         try {
-            const { name, email, password } = req.body
+            const { name, email, password, metadata } = req.body
 
-            const response  = await AuthController.RegisterUser({ name, email, password })
+            const response  = await AuthController.RegisterUser({ name, email, password, metadata })
 
             if(!response.success){
                 return res.status(response.code).send(response.error)
@@ -39,9 +39,9 @@ export class AuthRouter {
 
     private CompleteProfile = async(req: Request, res: Response) => {
         try {
-            const { uid, phone, country, position, company } = req.body
+            const { uid, phone, country, position, company, companyId } = req.body
 
-            const response  = await AuthController.CompleteProfile({ uid, phone, country, position, company })
+            const response  = await AuthController.CompleteProfile({ uid, phone, country, position, company, companyId })
 
             if(!response.success){
                 return res.status(response.code).send(response.error)
