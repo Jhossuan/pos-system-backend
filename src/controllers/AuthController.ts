@@ -23,6 +23,10 @@ export class AuthController {
         password: Joi.string().min(6).max(1024).required(),
     })
 
+    static SchemaNewPassword = Joi.object({
+        password: Joi.string().min(6).max(1024).required(),
+    })
+
     static ExpirationDate = (hours: number) => {
         return Math.floor(Date.now() / 1000) + (hours * 3200) // 3200 es igual a 60 * 60 ( 3200 equivale a 1hr en segundos )
     }
@@ -164,9 +168,9 @@ export class AuthController {
         }
 
         
-        if(user.metadata?.authVerify){
+        if(user.metadata?.codeVerify){
             let now = ToolsDate.getNow()
-            let expireIn = user.metadata?.authVerify?.expireIn
+            let expireIn = user.metadata?.codeVerify?.expireIn
 
             if(new Date(now) < new Date(expireIn)){
                 return {
@@ -187,7 +191,7 @@ export class AuthController {
                 expireIn: ToolsDate.expireInOneHour()
             }
     
-            await User.findOneAndUpdate({ email },{ "metadata.authVerify": authData },{ new: true })
+            await User.findOneAndUpdate({ email },{ "metadata.codeVerify": authData },{ new: true })
 
             return {
                 success: true,
@@ -207,7 +211,7 @@ export class AuthController {
 
     static VerificateAccount = async (uid: string, code: string): Promise<ControllerResponse<Object>> => {
 
-        const user = await User.findOne({ uid, "metadata.authVerify.code": code })
+        const user = await User.findOne({ uid, "metadata.codeVerify.code": code })
         if(!user){
             return {
                 success: false,
@@ -218,7 +222,7 @@ export class AuthController {
             }
         }
 
-        if(!user.metadata?.authVerify){
+        if(!user.metadata?.codeVerify){
             return {
                 success: false,
                 code: 404,
@@ -229,7 +233,7 @@ export class AuthController {
         }
 
         let now = ToolsDate.getNow()
-        let expireIn = user.metadata?.authVerify?.expireIn
+        let expireIn = user.metadata?.codeVerify?.expireIn
 
         if(new Date(now) >= new Date(expireIn)){
             return {
@@ -245,9 +249,9 @@ export class AuthController {
         try {
 
             await User.findOneAndUpdate(
-                { "metadata.authVerify.code": code },
+                { "metadata.codeVerify.code": code },
                 {
-                    $unset: { "metadata.authVerify": 1 },
+                    $unset: { "metadata.codeVerify": 1 },
                     $set: { "identity_verified": true }
                 },
                 {
@@ -273,6 +277,101 @@ export class AuthController {
         }
     }
 
+    static GenerateNewPassword = async (uid: string, code: string, password: string): Promise<ControllerResponse<Object>> => {
+        const user = await User.findOne({ uid, "metadata.codeVerify.code": code })
+        if(!user){
+            return {
+                success: false,
+                code: 404,
+                error: {
+                    msg: "Datos de verificación incorrectos"
+                }
+            }
+        }
+
+        if(!password){
+            return {
+                success: false,
+                code: 400,
+                error: {
+                    msg: "La contraseña es requerida"
+                }
+            }
+        }
+
+        const { error } = this.SchemaNewPassword.validate({ password })
+
+        if(error){
+            return {
+                success: false,
+                code: 404,
+                error: {
+                    msg: error.details[0].message
+                }
+            }
+        }
+
+        if(!user.metadata?.codeVerify){
+            return {
+                success: false,
+                code: 404,
+                error: {
+                    msg: "Usuario sin datos de verificación"
+                }
+            }
+        }
+
+        let now = ToolsDate.getNow()
+        let expireIn = user.metadata?.codeVerify?.expireIn
+
+        if(new Date(now) >= new Date(expireIn)){
+            return {
+                success: false,
+                code: 404,
+                error: {
+                    msg: "El código ha expirado"
+                }
+            }
+        }
+
+        // Hash password
+        const salt = await bcrypt.genSalt(10);
+        const hashPassword = await bcrypt.hash(password, salt);
+
+        try {
+
+            await User.findOneAndUpdate(
+                { "metadata.codeVerify.code": code },
+                {
+                    $unset: { "metadata.codeVerify": 1 },
+                    $set: { "password": hashPassword }
+                },
+                {
+                    new: true
+                }
+            )
+
+            return {
+                success: true,
+                code: 200,
+                res: {
+                    msg: "Contraseña reestablecida correctamente"
+                }
+            }
+        } catch (error) {
+            return {
+                success: false,
+                code: 500,
+                error: {
+                    msg: 'Error at GenerateNewPassword'
+                }
+            }
+        }
+
+
+
+    }
+
     static Login = async ({email, password}: {email: string, password: string}): Promise<ControllerResponse<Object>> => {
 
         try {
@@ -294,6 +393,16 @@ export class AuthController {
                     code: 404,
                     error: {
                         msg: 'Usuario no encontrado'
+                    }
+                }
+            }
+
+            if(!user.identity_verified){
+                return {
+                    success: false,
+                    code: 404,
+                    error: {
+                        msg: "Debes válidar tu cuenta"
                     }
                 }
             }

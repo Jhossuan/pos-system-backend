@@ -11,6 +11,7 @@ export class AuthRouter {
         this.router.post('/complete-profile', this.CompleteProfile);
         this.router.post('/verification-code', this.VerificationCode);
         this.router.post('/verificate-account', this.VerificateAccount);
+        this.router.post('/re-password', this.GenerateNewPassword);
         this.router.post('/login', this.Login);
     }
 
@@ -71,6 +72,21 @@ export class AuthRouter {
             const { uid, code } = req.body
 
             const response  = await AuthController.VerificateAccount(uid, code)
+
+            if(!response.success){
+                return res.status(response.code).send(response.error)
+            }
+            return res.status(response.code).send(response.res)
+        } catch (error: any) {
+            return res.status(500).send(error.message)
+        }
+    }
+
+    private GenerateNewPassword = async(req: Request, res: Response) => {
+        try {
+            const { uid, code, password } = req.body
+
+            const response  = await AuthController.GenerateNewPassword(uid, code, password)
 
             if(!response.success){
                 return res.status(response.code).send(response.error)

@@ -1,6 +1,8 @@
 import { ControllerResponse } from "../types/app";
 import Profile from "../models/ProfileSchema";
 import User from "../models/UserSchema";
+import { ProfileSchemaI } from "../types/profile";
+import { UserSchemaI } from "../types/user";
 
 export class UserController {
 
@@ -64,6 +66,141 @@ export class UserController {
                 code: 500,
                 error: {
                     msg: 'Error at userDelete'
+                }
+            }
+        }
+    }
+
+    static EditProfile = async (uid: string, newData: ProfileSchemaI): Promise<ControllerResponse<Object>> => {
+
+        const profile = await Profile.findOne({ uid })
+        if(!profile){
+            return {
+                success: false,
+                code: 404,
+                error: {
+                    msg: "Perfil no encontrado"
+                }
+            }
+        }
+
+        if(newData.uid){
+            return {
+                success: false,
+                code: 404,
+                error: {
+                    msg: "El UID no se puede modificar"
+                }
+            }
+        }
+
+        const update: any = { $set: {  } }
+        const values = Object.values(newData)
+        const keys = Object.keys(newData)
+
+        keys.forEach((item: string, i: number) => update['$set'][item] = values[i])
+
+        if(Object.keys(update['$set']).length <= 0){
+            return {
+                success: false,
+                code: 404,
+                error: {
+                    msg: "Campos a actualizar no proporcionados"
+                }
+            }
+        }
+
+        await Profile.findOneAndUpdate(
+            { uid },
+            update,
+            { new: true }
+        )
+
+        try {
+            return {
+                success: true,
+                code: 200,
+                res: {
+                    msg: "Perfil actualizado correctamente"
+                }
+            }
+        } catch (error) {
+            console.log('error-profile', error)
+            return {
+                success: false,
+                code: 500,
+                error: {
+                    msg: "Error at EditProfile"
+                }
+            }
+        }
+    }
+
+    static EditUserData = async (uid: string, newData: UserSchemaI): Promise<ControllerResponse<Object>> => {
+
+        const user = await User.findOne({ uid })
+        if(!user){
+            return {
+                success: false,
+                code: 404,
+                error: {
+                    msg: "Usuario no encontrado"
+                }
+            }
+        }
+
+        if( newData.uid ||
+            newData.password ||
+            newData.created_at ||
+            newData.identity_verified ||
+            newData.metadata
+        ){
+            return {
+                success: false,
+                code: 404,
+                error: {
+                    msg: "Solo se pueden editar el email y nombre"
+                }
+            }
+        }
+
+        const update: any = { $set: {  } }
+        const values = Object.values(newData)
+        const keys = Object.keys(newData)
+
+        keys.forEach((item: string, i: number) => update['$set'][item] = values[i])
+
+        if(Object.keys(update['$set']).length <= 0){
+            return {
+                success: false,
+                code: 404,
+                error: {
+                    msg: "Campos a actualizar no proporcionados"
+                }
+            }
+        }
+
+        await User.findOneAndUpdate(
+            { uid },
+            update,
+            { new: true }
+        )
+
+        try {
+            return {
+                success: true,
+                code: 200,
+                res: {
+                    msg: "Usuario actualizado correctamente"
+                }
+            }
+        } catch (error) {
+            console.log('error-profile', error)
+            return {
+                success: false,
+                code: 500,
+                error: {
+                    msg: "Error at EditUserData"
                 }
             }
         }
