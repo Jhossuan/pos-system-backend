@@ -71,7 +71,7 @@ export class AuthController {
             name,
             email,
             password: hashPassword,
-            ...(metadata?.pos?.length !== 0 && { "metadata.pos": metadata?.pos }), // Se valida, esto solamente es cuando se registra un empleado
+            ...( metadata?.subscription && { "metadata.subscription": metadata.subscription } )
         })
 
         try {
@@ -95,7 +95,7 @@ export class AuthController {
         }
     }
 
-    static CompleteProfile = async ({ uid, phone, country, position, company, companyId }: ProfileSchemaI): Promise<ControllerResponse<Object>> => {
+    static CompleteProfile = async ({ uid, phone, country, position, company, companyId, store }: ProfileSchemaI): Promise<ControllerResponse<Object>> => {
 
         if(!uid || !phone || !country || !position || !company){
             return {
@@ -114,7 +114,7 @@ export class AuthController {
                 code: 404,
                 error: {
                     msg: "Usuario no encontrado"
-                } 
+                }
             }
         }
 
@@ -124,7 +124,8 @@ export class AuthController {
             country,
             position,
             company,
-            ...(companyId ? { companyId } : { companyId: this.uid.rnd() })
+            ...(companyId ? { companyId } : { companyId: this.uid.rnd() }),
+            ...(store && { store }),// store es el storeId de la sucursal
         })
 
         try {

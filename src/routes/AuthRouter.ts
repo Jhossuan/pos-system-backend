@@ -39,9 +39,9 @@ export class AuthRouter {
 
     private CompleteProfile = async(req: Request, res: Response) => {
         try {
-            const { uid, phone, country, position, company, companyId } = req.body
+            const { uid, phone, country, position, company, companyId, store } = req.body
 
-            const response  = await AuthController.CompleteProfile({ uid, phone, country, position, company, companyId })
+            const response  = await AuthController.CompleteProfile({ uid, phone, country, position, company, companyId, store })
 
             if(!response.success){
                 return res.status(response.code).send(response.error)

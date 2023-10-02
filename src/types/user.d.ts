@@ -11,9 +11,8 @@ type CodeVerify = {
 }
 
 export type MetadataI = {
-    pos?: Array<string> | [] // ["posId1002031", "posId2202081", "posId9022215"]
     lastConnection: Date | null
-    subscription: SubscriptionsT
+    subscription?: SubscriptionsT
     codeVerify?: CodeVerify,
 }
 

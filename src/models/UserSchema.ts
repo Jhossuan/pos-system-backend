@@ -6,7 +6,6 @@ const uid = new ShortUniqueId({ length:20 });
 
 const InitMetadata: MetadataI = {
     lastConnection: null,
-    subscription: "FREE",
 }
 
 const UserSchema = new Schema({

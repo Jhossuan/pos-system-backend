@@ -5,6 +5,7 @@ export interface ProfileSchemaI {
     position: Position
     company: string
     companyId: string
+    store?: Array<string>
 }
 
 export enum Position {
