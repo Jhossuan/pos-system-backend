@@ -84,12 +84,12 @@ export class UserController {
             }
         }
 
-        if(newData.uid){
+        if(newData.uid || newData.companyId){
             return {
                 success: false,
                 code: 404,
                 error: {
-                    msg: "El UID no se puede modificar"
+                    msg: "Datos no modificables"
                 }
             }
         }

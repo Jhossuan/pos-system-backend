@@ -125,7 +125,7 @@ export class AuthController {
             position,
             company,
             ...(companyId ? { companyId } : { companyId: this.uid.rnd() }),
-            ...(store && { store }),// store es el storeId de la sucursal
+            ...(store && { store }),// store es de type [{ storeId: string, name: string }]
         })
 
         try {
@@ -174,21 +174,21 @@ export class AuthController {
         }
 
         
-        if(user.metadata?.codeVerify){
-            let now = ToolsDate.getNow()
-            let expireIn = user.metadata?.codeVerify?.expireIn
+        // if(user.metadata?.codeVerify){
+        //     let now = ToolsDate.getNow()
+        //     let expireIn = user.metadata?.codeVerify?.expireIn
 
-            if(new Date(now) < new Date(expireIn)){
-                return {
-                    success: false,
-                    code: 404,
-                    error: {
-                        msg: `Tu código esta vigente hasta: ${ moment(expireIn).format('LTS') }`,
-                    }
-                }
-            }
+        //     if(new Date(now) < new Date(expireIn)){
+        //         return {
+        //             success: false,
+        //             code: 404,
+        //             error: {
+        //                 msg: `Tu código esta vigente hasta: ${ moment(expireIn).format('LTS') }`,
+        //             }
+        //         }
+        //     }
 
-        }
+        // }
 
         try {
             const authData = {
