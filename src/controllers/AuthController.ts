@@ -150,7 +150,7 @@ export class AuthController {
         }
     }
 
-    static VerificationCode = async (email: string): Promise<ControllerResponse<Object>> => {
+    static VerificationCode = async (email: string, repassword?: boolean): Promise<ControllerResponse<Object>> => {
 
         if(!email){
             return {
@@ -172,29 +172,22 @@ export class AuthController {
                 }
             }
         }
-
         
-        // if(user.metadata?.codeVerify){
-        //     let now = ToolsDate.getNow()
-        //     let expireIn = user.metadata?.codeVerify?.expireIn
-
-        //     if(new Date(now) < new Date(expireIn)){
-        //         return {
-        //             success: false,
-        //             code: 404,
-        //             error: {
-        //                 msg: `Tu código esta vigente hasta: ${ moment(expireIn).format('LTS') }`,
-        //             }
-        //         }
-        //     }
-
-        // }
-
         try {
             const authData = {
                 uid: user.uid,
                 code: this.VerificationNumber(),
-                expireIn: ToolsDate.expireInOneHour()
+                expireIn: ToolsDate.expireInOneHour(),
+                ...(repassword && { validate: false })
+            }
+
+            if(repassword){
+                await User.findOneAndUpdate({ email },{ "metadata.passwordVerify": authData },{ new: true })
+                return {
+                    success: true,
+                    code: 200,
+                    res: authData
+                }
             }
     
             await User.findOneAndUpdate({ email },{ "metadata.codeVerify": authData },{ new: true })
@@ -283,41 +276,19 @@ export class AuthController {
         }
     }
 
-    static GenerateNewPassword = async (uid: string, code: string, password: string): Promise<ControllerResponse<Object>> => {
-        const user = await User.findOne({ uid, "metadata.codeVerify.code": code })
+    static VerificateRepassword = async (uid: string, code: string): Promise<ControllerResponse<Object>> => {
+        const user = await User.findOne({ uid, "metadata.passwordVerify.code": code })
         if(!user){
             return {
                 success: false,
                 code: 404,
                 error: {
-                    msg: "Datos de verificación incorrectos"
+                    msg: "El código ingresado es el incorrecto"
                 }
             }
         }
 
-        if(!password){
-            return {
-                success: false,
-                code: 400,
-                error: {
-                    msg: "La contraseña es requerida"
-                }
-            }
-        }
-
-        const { error } = this.SchemaNewPassword.validate({ password })
-
-        if(error){
-            return {
-                success: false,
-                code: 404,
-                error: {
-                    msg: error.details[0].message
-                }
-            }
-        }
-
-        if(!user.metadata?.codeVerify){
+        if(!user.metadata?.passwordVerify){
             return {
                 success: false,
                 code: 404,
@@ -328,7 +299,7 @@ export class AuthController {
         }
 
         let now = ToolsDate.getNow()
-        let expireIn = user.metadata?.codeVerify?.expireIn
+        let expireIn = user.metadata?.passwordVerify?.expireIn
 
         if(new Date(now) >= new Date(expireIn)){
             return {
@@ -340,16 +311,93 @@ export class AuthController {
             }
         }
 
-        // Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashPassword = await bcrypt.hash(password, salt);
-
         try {
 
             await User.findOneAndUpdate(
-                { "metadata.codeVerify.code": code },
+                { "metadata.passwordVerify.code": code },
                 {
-                    $unset: { "metadata.codeVerify": 1 },
+                    $set: { "metadata.passwordVerify.validate": true },
+                },
+                {
+                    new: true
+                }
+            )
+
+            return {
+                success: true,
+                code: 200,
+                res: {
+                    msg: "Código correcto, restablece tu contraseña"
+                }
+            }
+        } catch (error) {
+            return {
+                success: false,
+                code: 500,
+                error: {
+                    msg: 'Error at VerificateRepassword'
+                }
+            }
+        }
+
+
+
+    }
+
+    static ForgotPassword = async (uid: string, password: string): Promise<ControllerResponse<Object>> => {
+        try {
+
+            const user = await User.findOne({ uid })
+            if(!user){
+                return {
+                    success: false,
+                    code: 400,
+                    error: {
+                        msg: "Usuario no encontrado"
+                    }
+                }
+            }
+
+            if(!user.metadata?.passwordVerify?.validate){
+                return {
+                    success: false,
+                    code: 400,
+                    error: {
+                        msg: "El usuario no ha solicitado recuperación de contraseña"
+                    }
+                }
+            }
+            
+            if(!password){
+                return {
+                    success: false,
+                    code: 400,
+                    error: {
+                        msg: "La contraseña es requerida"
+                    }
+                }
+            }
+
+            const { error } = this.SchemaNewPassword.validate({ password })
+
+            if(error){
+                return {
+                    success: false,
+                    code: 404,
+                    error: {
+                        msg: error.details[0].message
+                    }
+                }
+            }
+
+             // Hash password
+            const salt = await bcrypt.genSalt(10);
+            const hashPassword = await bcrypt.hash(password, salt);
+
+            await User.findOneAndUpdate(
+                { uid },
+                {
+                    $unset: { "metadata.passwordVerify": 1 },
                     $set: { "password": hashPassword }
                 },
                 {
@@ -361,21 +409,20 @@ export class AuthController {
                 success: true,
                 code: 200,
                 res: {
-                    msg: "Contraseña reestablecida correctamente"
+                    msg: "Contraseña restablecida correctamente"
                 }
             }
+
         } catch (error) {
+            console.log('error', error)
             return {
                 success: false,
                 code: 500,
                 error: {
-                    msg: 'Error at GenerateNewPassword'
+                    msg: "Error at ForgotPassword"
                 }
             }
         }
-
-
-
     }
 
     static Login = async ({email, password}: {email: string, password: string}): Promise<ControllerResponse<Object>> => {

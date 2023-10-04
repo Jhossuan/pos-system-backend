@@ -11,7 +11,8 @@ export class AuthRouter {
         this.router.post('/complete-profile', this.CompleteProfile);
         this.router.post('/verification-code', this.VerificationCode);
         this.router.post('/verificate-account', this.VerificateAccount);
-        this.router.post('/re-password', this.GenerateNewPassword);
+        this.router.post('/verificate-repassword', this.VerificateRepassword);
+        this.router.post('/re-password', this.ForgotPassword);
         this.router.post('/login', this.Login);
     }
 
@@ -54,9 +55,9 @@ export class AuthRouter {
 
     private VerificationCode = async(req: Request, res: Response) => {
         try {
-            const { email } = req.body
+            const { email, repassword } = req.body
 
-            const response  = await AuthController.VerificationCode(email)
+            const response  = await AuthController.VerificationCode(email, repassword)
 
             if(!response.success){
                 return res.status(response.code).send(response.error)
@@ -82,11 +83,26 @@ export class AuthRouter {
         }
     }
 
-    private GenerateNewPassword = async(req: Request, res: Response) => {
+    private VerificateRepassword = async(req: Request, res: Response) => {
         try {
-            const { uid, code, password } = req.body
+            const { uid, code } = req.body
 
-            const response  = await AuthController.GenerateNewPassword(uid, code, password)
+            const response  = await AuthController.VerificateRepassword(uid, code)
+
+            if(!response.success){
+                return res.status(response.code).send(response.error)
+            }
+            return res.status(response.code).send(response.res)
+        } catch (error: any) {
+            return res.status(500).send(error.message)
+        }
+    }
+
+    private ForgotPassword = async(req: Request, res: Response) => {
+        try {
+            const { uid, password } = req.body
+
+            const response  = await AuthController.ForgotPassword(uid, password)
 
             if(!response.success){
                 return res.status(response.code).send(response.error)
