@@ -172,6 +172,16 @@ export class AuthController {
                 }
             }
         }
+
+        if(user.identity_verified && !repassword){
+            return {
+                success: false,
+                code: 400,
+                error: {
+                    msg: "Este usuario ya ha sido válidado"
+                }
+            }
+        }
         
         try {
             const authData = {
