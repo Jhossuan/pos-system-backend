@@ -465,7 +465,7 @@ export class AuthController {
                     success: false,
                     code: 404,
                     error: {
-                        msg: "Debes válidar tu cuenta"
+                        msg: "Debes verificar tu cuenta"
                     }
                 }
             }
