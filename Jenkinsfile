@@ -3,7 +3,7 @@ pipeline {
   stages {
     stage('Checkout Code') {
       steps {
-        git(url: 'https://github.com/Jhossuan/pos-system-backend', branch: 'jenkins-lab')
+        git(url: 'https://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@github.com/Jhossuan/pos-system-backend.git', branch: 'jenkins-lab')
       }
     }
 
