@@ -21,7 +21,7 @@ const ProfileSchema = new Schema({
     },
     company: {
         type: String,
-        require: true
+        require: false
     },
     companyId: {
         type: String,

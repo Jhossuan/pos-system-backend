@@ -124,7 +124,7 @@ export class AuthController {
             country,
             position,
             company,
-            ...(companyId ? { companyId } : { companyId: this.uid.rnd() }),
+            ...(companyId ? { companyId } : { companyId: `companyId-${this.uid.rnd()}` }),
             ...(store && { store }),// store es de type [{ storeId: string, name: string }]
         })
 
